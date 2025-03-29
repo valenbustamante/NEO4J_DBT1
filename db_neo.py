@@ -32,6 +32,40 @@ def ejecutar_relacion(nodo1, clave1, valor1, relacion, nodo2, clave2, valor2):
     with driver.session() as session:
         session.execute_write(lambda tx: tx.run(query, valor1=valor1, valor2=valor2))
 
+def actualizar_nodo(nodo, clave, valor, nuevos_valores):
+    set_clause = ", ".join([f"{k}: ${k}" for k in nuevos_valores.keys()])
+    query = f"""
+        MATCH (n:{nodo} {{{clave}: $valor}})
+        SET n += {{{set_clause}}}
+    """
+    with driver.session() as session:
+        session.execute_write(lambda tx: tx.run(query, valor=valor, **nuevos_valores))
+
+def eliminar_nodo(nodo, clave, valor):
+    query = f"""
+        MATCH (n:{nodo} {{{clave}: $valor}})
+        DETACH DELETE n
+    """
+    with driver.session() as session:
+        session.execute_write(lambda tx: tx.run(query, valor=valor))
+
+def actualizar_relacion(nodo1, clave1, valor1, relacion, nodo2, clave2, valor2, nuevos_valores):
+    set_clause = ", ".join([f"r.{k} = ${k}" for k in nuevos_valores.keys()])
+    query = f"""
+        MATCH (a:{nodo1} {{{clave1}: $valor1}})-[r:{relacion}]->(b:{nodo2} {{{clave2}: $valor2}})
+        SET {set_clause}
+    """
+    with driver.session() as session:
+        session.execute_write(lambda tx: tx.run(query, valor1=valor1, valor2=valor2, **nuevos_valores))
+
+def eliminar_relacion(nodo1, clave1, valor1, relacion, nodo2, clave2, valor2):
+    query = f"""
+        MATCH (a:{nodo1} {{{clave1}: $valor1}})-[r:{relacion}]->(b:{nodo2} {{{clave2}: $valor2}})
+        DELETE r
+    """
+    with driver.session() as session:
+        session.execute_write(lambda tx: tx.run(query, valor1=valor1, valor2=valor2))
+'''
 # Restricciones (PKs)
 constrains = [
     "CREATE CONSTRAINT unique_usuario FOR (u:USUARIO) REQUIRE u.idu IS UNIQUE;",
@@ -39,8 +73,8 @@ constrains = [
     "CREATE CONSTRAINT unique_comentario FOR (c:COMENTARIO) REQUIRE c.consec IS UNIQUE;"
 ]
 
-#for constrain in constrains:
-#    ejecutar_create(query = constrain)
+for constrain in constrains:
+    ejecutar_create(query = constrain)
 
 # Nodos de prueba (CREATE ya está automatizado)
 usuarios = [{"idu": 1, "nombre": "Juan"}, {"idu": 2, "nombre": "María"}]
@@ -50,7 +84,6 @@ comentarios = [
     {"consec": 2, "contenidoCom": "Interesante", "fechorCom": "2024-03-29", "likeNotLike": False, "fechorAut": "2024-03-29"}
 ]
 
-'''
 for usuario in usuarios:
     ejecutar_create(type = 'user', parametros= usuario)
 
@@ -59,9 +92,7 @@ for post in posts:
 
 for comentario in comentarios:
     ejecutar_create(type = 'comment', parametros = comentario)
-'''
 
-# Relaciones de prueba (ya está automatizado tmb)
 relaciones = [
     ("USUARIO", "idu", 1, "PUBLICA", "POST", "idp", 101),
     ("USUARIO", "idu", 2, "PUBLICA", "POST", "idp", 102),
@@ -74,6 +105,13 @@ relaciones = [
 ]
 
 for relacion in relaciones:
-    ejecutar_relacion(*relacion)
+   ejecutar_relacion(*relacion)
+
+actualizar_nodo("USUARIO", "idu", 1, {"nombre": "Juan Pérez"})
+eliminar_nodo("POST", "idp", 102)
+
+actualizar_relacion("USUARIO", "idu", 1, "PUBLICA", "POST", "idp", 101, {"fecha": "2024-03-29"})
+eliminar_relacion("USUARIO", "idu", 1, "PUBLICA", "POST", "idp", 101)
+'''
 
 driver.close()
