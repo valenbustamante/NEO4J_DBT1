@@ -13,7 +13,7 @@ AUTH = (os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
 
 driver = GraphDatabase.driver(URI, auth=AUTH)
 
-def ejecutar_create(query = '', type = '', parametros={}):
+def crear_nodo(query = '', type = '', parametros={}):
     with driver.session() as session:
         if type == 'user':
             query = "MERGE (:USUARIO {idu: $idu, nombre: $nombre})"
@@ -24,7 +24,7 @@ def ejecutar_create(query = '', type = '', parametros={}):
 
         session.execute_write(lambda tx: tx.run(query, **parametros))
 
-def ejecutar_relacion(nodo1, clave1, valor1, relacion, nodo2, clave2, valor2):
+def crear_relacion(nodo1, clave1, valor1, relacion, nodo2, clave2, valor2):
     query = f"""
         MATCH (a:{nodo1} {{{clave1}: $valor1}}), (b:{nodo2} {{{clave2}: $valor2}})
         MERGE (a)-[:{relacion}]->(b)
@@ -74,7 +74,7 @@ constrains = [
 ]
 
 for constrain in constrains:
-    ejecutar_create(query = constrain)
+    crear_nodo(query = constrain)
 
 # Nodos de prueba (CREATE ya está automatizado)
 usuarios = [{"idu": 1, "nombre": "Juan"}, {"idu": 2, "nombre": "María"}]
@@ -85,13 +85,13 @@ comentarios = [
 ]
 
 for usuario in usuarios:
-    ejecutar_create(type = 'user', parametros= usuario)
+    crear_nodo(type = 'user', parametros= usuario)
 
 for post in posts:
-    ejecutar_create(type = 'post', parametros = post)
+    crear_nodo(type = 'post', parametros = post)
 
 for comentario in comentarios:
-    ejecutar_create(type = 'comment', parametros = comentario)
+    crear_nodo(type = 'comment', parametros = comentario)
 
 relaciones = [
     ("USUARIO", "idu", 1, "PUBLICA", "POST", "idp", 101),
@@ -105,7 +105,7 @@ relaciones = [
 ]
 
 for relacion in relaciones:
-   ejecutar_relacion(*relacion)
+   crear_relacion(*relacion)
 
 actualizar_nodo("USUARIO", "idu", 1, {"nombre": "Juan Pérez"})
 eliminar_nodo("POST", "idp", 102)
