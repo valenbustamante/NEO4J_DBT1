@@ -87,6 +87,26 @@ def consulta_2_taller(idp):
         result = session.execute_read(lambda tx: tx.run(query, idp=idp).data())  
         return [record for record in result]
 
+def consultar_autoriz(consec):
+    query = """
+    MATCH(u:USUARIO)-[:AUTORIZA]->(c:COMENTARIO{consec: $consec})
+    RETURN u
+    """
+    with driver.session() as session:
+        result = session.execute_read(lambda tx: tx.run(query, consec=consec).data())  
+        return [record for record in result]
+    
+def consultar_nodo(clave, valor, tipo):
+    query = f"""
+    MATCH(n:{tipo})
+    WHERE n.{clave} = {valor}
+    return n
+    """
+
+    with driver.session() as session:
+        result = session.execute_read(lambda tx: tx.run(query, clave=valor).data())  
+        return [record for record in result]
+
 def visualize_database():
     driver = GraphDatabase.driver(URI, auth=AUTH)
     
