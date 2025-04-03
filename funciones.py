@@ -74,12 +74,12 @@ def consulta_1_taller(idu):
 def consulta_2_taller(idp):
     query = """
     MATCH (p:POST {idp: $idp})-[:TIENE]->(c:COMENTARIO)
-    OPTIONAL MATCH (a:USUARIO)-[:AUTORIZA]->(c)
+    OPTIONAL MATCH (a:USUARIO)-[:HACE]->(c)
     RETURN 
         c.fechorCom AS fecha_creacion_comentario, 
         c.contenidoCom AS comentario, 
         c.fechorAut AS fecha_autorizacion, 
-        a.nombre AS autorizado_por, 
+        a.nombre AS comentado_por, 
         c.likeNotLike AS megusta
     ORDER BY c.fechorCom DESC
     """
