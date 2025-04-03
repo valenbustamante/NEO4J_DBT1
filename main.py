@@ -14,43 +14,6 @@ from datetime import datetime
 # for constrain in constrains:
 #     crear_nodo(query = constrain)
 
-# # Nodos de prueba (CREATE ya está automatizado)
-# usuarios = [{"idu": 1, "nombre": "Juan"}, {"idu": 2, "nombre": "María"}]
-# posts = [{"idp": 101, "contenido": "Mi primer post"}, {"idp": 102, "contenido": "Hola a todos"}]
-# comentarios = [
-#     {"consec": 1, "contenidoCom": "Buen post", "fechorCom": "2024-03-29", "likeNotLike": True, "fechorAut": "2024-03-29"},
-#     {"consec": 2, "contenidoCom": "Interesante", "fechorCom": "2024-03-29", "likeNotLike": False, "fechorAut": "2024-03-29"}
-# ]
-
-# for usuario in usuarios:
-#     crear_nodo(type = 'user', parametros= usuario)
-
-# for post in posts:
-#     crear_nodo(type = 'post', parametros = post)
-
-# for comentario in comentarios:
-#     crear_nodo(type = 'comment', parametros = comentario)
-
-# relaciones = [
-#     ("USUARIO", "idu", 1, "PUBLICA", "POST", "idp", 101),
-#     ("USUARIO", "idu", 2, "PUBLICA", "POST", "idp", 102),
-#     ("POST", "idp", 101, "TIENE", "COMENTARIO", "consec", 1),
-#     ("POST", "idp", 102, "TIENE", "COMENTARIO", "consec", 2),
-#     ("USUARIO", "idu", 2, "HACE", "COMENTARIO", "consec", 1),
-#     ("USUARIO", "idu", 1, "HACE", "COMENTARIO", "consec", 2),
-#     ("USUARIO", "idu", 1, "AUTORIZA", "COMENTARIO", "consec", 1),
-#     ("USUARIO", "idu", 2, "AUTORIZA", "COMENTARIO", "consec", 2)
-# ]
-
-# for relacion in relaciones:
-#    crear_relacion(*relacion)
-
-# actualizar_nodo("USUARIO", "idu", 1, {"nombre": "Juan Pérez"})
-# eliminar_nodo("POST", "idp", 102)
-
-# actualizar_relacion("USUARIO", "idu", 1, "PUBLICA", "POST", "idp", 101, {"fecha": "2024-03-29"})
-# eliminar_relacion("USUARIO", "idu", 1, "PUBLICA", "POST", "idp", 101)
-
 
 base_path = os.path.dirname(os.path.abspath(__file__))
 logo_path = os.path.join(base_path, "logo.png")
@@ -191,10 +154,27 @@ elif opcion == "Consultas":
                 if idp:
                     comentarios = consulta_2_taller(idp)
                     if comentarios:
-                        st.write("Comentarios del post seleccionado:")
-                        st.write(comentarios)
+                        st.subheader("Comentarios")
+                        for comentario in comentarios:
+                            with st.container():
+                                st.markdown(f"**{comentario.get('comentado_por', 'Anónimo')}** dice:")
+                                st.markdown(f"""    *{comentario.get('comentario', 'Sin contenido')}*""")
+                                footerc = f"📅 {comentario.get('fecha_creacion_comentario', 'Fecha desconocida')}" + "      "
+                                if comentario.get('megusta', False) is False:
+                                    footerc= footerc + "👎 No le gusta"
+                                else:
+                                    footerc= footerc +  f"👍 Le gusta"
+                                st.markdown(footerc)
+                                if comentario.get('fecha_autorizacion', None) == '':
+                                    st.markdown("📅❌ No autorizado")
+                                else:
+                                    st.markdown(f"📅☑️ {comentario.get('fecha_autorizacion', 'No autorizado')}")
+                                st.markdown("---")
                     else:
-                        st.write("No hay comentarios para este post.")
+                        st.info("No hay comentarios para este post.")
+            else:
+                st.warning("Este usuario no tiene posts.")
+
 
     if consulta == 'Autorización de comentarios':
         st.subheader("Autorización de comentarios")
