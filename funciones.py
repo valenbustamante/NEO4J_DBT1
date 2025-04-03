@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 URI = os.getenv("NEO4J_URI") 
-AUTH = (os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
+AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
 
 driver = GraphDatabase.driver(URI, auth=AUTH)
 
@@ -55,14 +55,6 @@ def actualizar_relacion(nodo1, clave1, valor1, relacion, nodo2, clave2, valor2, 
     with driver.session() as session:
         session.execute_write(lambda tx: tx.run(query, valor1=valor1, valor2=valor2, **nuevos_valores))
 
-def eliminar_relacion(nodo1, clave1, valor1, relacion, nodo2, clave2, valor2):
-    query = f"""
-        MATCH (a:{nodo1} {{{clave1}: $valor1}})-[r:{relacion}]->(b:{nodo2} {{{clave2}: $valor2}})
-        DELETE r
-    """
-    with driver.session() as session:
-        session.execute_write(lambda tx: tx.run(query, valor1=valor1, valor2=valor2))
-
 def get_list_of(nodo):
     query = f"MATCH (n:{nodo}) RETURN n"
     with driver.session() as session:
@@ -71,13 +63,30 @@ def get_list_of(nodo):
     return [dict(record['n']) for record in result]
 def consulta_1_taller(idu):  
     query = """
-    MATCH (u:USUARIO {idu: $idu})-[:HACE]->(c:COMENTARIO)
+    MATCH (u:USUARIO {idu: $idu})-[:PUBLICA]->(p:POST)
     WHERE u.nombre <> "ANONIMO" AND u.nombre <> "MANAGER"
-    RETURN c
+    RETURN p
     """
     with driver.session() as session:
         result = session.execute_read(lambda tx: tx.run(query, idu=idu).data())   
-    return [dict(record['c']) for record in result]
+    return [dict(record['p']) for record in result]
+
+def consulta_2_taller(idp):
+    query = """
+    MATCH (p:POST {idp: $idp})-[:TIENE]->(c:COMENTARIO)
+    OPTIONAL MATCH (a:USUARIO)-[:AUTORIZA]->(c)
+    RETURN 
+        c.fechorCom AS fecha_creacion_comentario, 
+        c.contenidoCom AS comentario, 
+        c.fechorAut AS fecha_autorizacion, 
+        a.nombre AS autorizado_por, 
+        c.likeNotLike AS megusta
+    ORDER BY c.fechorCom DESC
+    """
+    with driver.session() as session:
+        result = session.execute_read(lambda tx: tx.run(query, idp=idp).data())  
+        return [record for record in result]
+
 def visualize_database():
     driver = GraphDatabase.driver(URI, auth=AUTH)
     
